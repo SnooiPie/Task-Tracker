@@ -27,10 +27,22 @@ func addTask() {
 	fmt.Print("Priority (1-5, where 1 is highest): ")
 	fmt.Scanln(&task.Priority)
 
-	fmt.Print("Due Date (YYYY-MM-DD): ")
-	dateStr := ""
-	fmt.Scanln(&dateStr)
-	task.DueDate, _ = time.Parse("2006-01-02", dateStr)
+	var dateStr string
+	for {
+		fmt.Print("Due Date (YYYY-MM-DD): ")
+		fmt.Scanln(&dateStr)
+		dueDate, err := time.Parse("2006-01-02", dateStr)
+		if err != nil {
+			fmt.Println("Invalid date format. Please use YYYY-MM-DD.")
+			continue
+		}
+		if dueDate.Before(time.Now()) {
+			fmt.Println("Due date must be in the future.")
+			continue
+		}
+		task.DueDate = dueDate
+		break
+	}
 
 	task.Completed = false
 	tasks = append(tasks, task)
@@ -38,6 +50,10 @@ func addTask() {
 }
 
 func listTasks() {
+	if len(tasks) == 0 {
+		fmt.Println("No tasks available.")
+		return
+	}
 	fmt.Println("Tasks:")
 	for i, task := range tasks {
 		status := "Pending"
@@ -77,7 +93,11 @@ func main() {
 
 		var choice int
 		fmt.Print("Enter your choice: ")
-		fmt.Scanln(&choice)
+		_, err := fmt.Scanln(&choice)
+		if err != nil {
+			fmt.Println("Invalid input. Please enter a valid choice.")
+			continue
+		}
 
 		switch choice {
 		case 1:
@@ -90,12 +110,19 @@ func main() {
 			listTasks()
 			var index int
 			fmt.Print("Enter task index to mark as completed: ")
-			fmt.Scanln(&index)
+			_, err := fmt.Scanln(&index)
+			if err != nil || index <= 0 || index > len(tasks) {
+				fmt.Println("Invalid task index.")
+				continue
+			}
 			markAsCompleted(index - 1)
 
 		case 4:
 			fmt.Println("Exiting Task Tracker. Goodbye!")
 			os.Exit(0)
+
+		default:
+			fmt.Println("Invalid choice. Please select a valid option.")
 		}
 
 		fmt.Println()
